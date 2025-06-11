@@ -23,59 +23,40 @@ public class BookApplicationServiceImpl implements BookApplicationService {
     }
 
     public List<Book> findAll() {
-        return this.bookDomainService.findAll();
+        return bookDomainService.findAll();
+    }
+
+
+    public Optional<Book> findById(Long id) {
+        return bookDomainService.findById(id);
     }
 
     public Optional<CreateBookDto> save(CreateBookDto createBookDto) {
-        if (createBookDto.author() != null && createBookDto.category() != null) {
-            Optional<Author> authorOptional = this.authorDomainService.findById(createBookDto.author());
-            if (authorOptional.isPresent()) {
-                Category category = Category.valueOf(createBookDto.category().toUpperCase());
-                Book book = createBookDto.toBook((Author)authorOptional.get(), category);
-                return this.bookDomainService.save(book).map(CreateBookDto::from);
-            } else {
-                return Optional.empty();
-            }
-        } else {
-            return Optional.empty();
-        }
+        Author author = authorDomainService.findById(createBookDto.author()).orElseThrow(()->new RuntimeException("Author not found"));
+
+        return bookDomainService
+                .save(createBookDto.toBook(author,Category.valueOf(createBookDto.category())))
+                .map(CreateBookDto::from);
     }
 
-    public Optional<Book> findById(Long id) {
-        return this.bookDomainService.findById(id);
-    }
-
-    public Optional<Book> markAsRented(Long id) {
-        return this.bookDomainService.findById(id).filter((book) -> {
-            return book.getAvaliableCopies() > 0;
-        }).flatMap((book) -> {
-            book.setAvaliableCopies(book.getAvaliableCopies() - 1);
-            return this.bookDomainService.save(book);
-        });
-    }
 
     public Optional<UpdateBookDto> update(Long id, UpdateBookDto updateBookDto) {
-        Optional<Book> existingBook = this.bookDomainService.findById(id);
-        if (existingBook.isEmpty()) {
-            return Optional.empty();
-        } else {
-            Optional<Author> authorOptional = this.authorDomainService.findById(updateBookDto.author());
-            if (authorOptional.isEmpty()) {
-                return Optional.empty();
-            } else {
-                Category newCategory = Category.valueOf(updateBookDto.category().toUpperCase());
-                Book bookToUpdate = (Book)existingBook.get();
-                bookToUpdate.setName(updateBookDto.name());
-                bookToUpdate.setAvaliableCopies(updateBookDto.avaliableCopies());
-                bookToUpdate.setAuthor((Author)authorOptional.get());
-                bookToUpdate.setCategory(newCategory);
-                return this.bookDomainService.update(id, bookToUpdate).map(UpdateBookDto::from);
-            }
-        }
+        Author author = authorDomainService.findById(updateBookDto.author()).orElseThrow(()->new RuntimeException("Author not found"));
+        Category category= Category.valueOf(updateBookDto.category());
+
+        Book book = bookDomainService.findById(id).orElseThrow(()->new RuntimeException("Book not found"));
+
+        return bookDomainService
+                .update(id,updateBookDto.toBook(book,author,category))
+                .map(UpdateBookDto::from);
+    }
+    public Optional<Book> markAsRented(Long id) {
+        return null;
     }
 
+
     public void deleteById(Long id) {
-        this.bookDomainService.deleteById(id);
+       bookDomainService.deleteById(id);
     }
 
     public List<UpdateBookDto> getAvaliableBooks() {

@@ -106,6 +106,7 @@ public class AuthorController {
         return this.authorsPerCountryViewRepository.findAll().stream().map((view) -> {
             return new AuthorsPerCountryDto(view.getCountryId(), view.getNumAuthors());
         }).toList();
+
     }
 
     @Operation(

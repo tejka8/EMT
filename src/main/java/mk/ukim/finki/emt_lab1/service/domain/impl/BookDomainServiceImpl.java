@@ -25,62 +25,35 @@ public class BookDomainServiceImpl implements BookDomainService {
     }
 
     public List<Book> findAll() {
-        return this.bookRepository.findAll();
+        return bookRepository.findAll();
     }
 
     public Optional<Book> findById(Long id) {
-        return this.bookRepository.findById(id);
+
+        return bookRepository.findById(id);
     }
 
     public Optional<Book> save(Book bookDto) {
-        if (bookDto.getAuthor() != null && bookDto.getCategory() != null) {
-            Optional<Author> authorOptional = this.authorService.findById(bookDto.getAuthor().getId());
-            if (authorOptional.isPresent()) {
-                Book book = new Book(bookDto.getName(), Category.valueOf(bookDto.getCategory().toString()), (Author)authorOptional.get(), bookDto.getAvaliableCopies());
-                return Optional.of((Book)this.bookRepository.save(book));
-            } else {
-                return Optional.empty();
-            }
-        } else {
-            return Optional.empty();
-        }
+        return Optional.of(bookRepository.save(bookDto));
     }
 
     public Optional<Book> update(Long id, Book book) {
-        return this.bookRepository.findById(id).map((existingBook) -> {
-            if (book.getName() != null) {
-                existingBook.setName(book.getName());
-            }
+        return bookRepository.findById(id).map((existing)->{
+           existing.setAvaliableCopies(book.getAvaliableCopies());
+           existing.setName(book.getName());
+           existing.setAuthor(book.getAuthor());
+           existing.setCategory(book.getCategory());
 
-            if (book.getAvaliableCopies() != null) {
-                existingBook.setAvaliableCopies(book.getAvaliableCopies());
-            }
-
-            if (book.getCategory() != null) {
-                existingBook.setCategory(Category.valueOf(book.getCategory().toString()));
-            }
-
-            if (book.getAuthor() != null && this.authorService.findById(book.getAuthor().getId()).isPresent()) {
-                existingBook.setAuthor((Author)this.authorService.findById(book.getAuthor().getId()).get());
-            }
-
-            return (Book)this.bookRepository.save(existingBook);
+           return bookRepository.save(existing);
         });
     }
 
     public Optional<Book> markAsRented(Long id) {
-        Optional<Book> book1 = this.bookRepository.findById(id);
-        if (book1.isPresent() && ((Book)book1.get()).getAvaliableCopies() > 0) {
-            Book rented = (Book)book1.get();
-            rented.setAvaliableCopies(rented.getAvaliableCopies() - 1);
-            return Optional.of((Book)this.bookRepository.save(rented));
-        } else {
-            throw new RuntimeException("Book not available for rent");
-        }
+       return null;
     }
 
     public void deleteById(Long id) {
-        this.bookRepository.deleteById(id);
+        bookRepository.deleteById(id);
     }
 
     public void rerefreshMaterializedView() {

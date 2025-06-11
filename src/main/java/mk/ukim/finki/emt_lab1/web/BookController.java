@@ -39,13 +39,13 @@ import org.springframework.web.bind.annotation.RestController;
         description = "Endpoints for managing books"
 )
 public class BookController {
-    private final BookApplicationService bookDomainService;
+    private final BookApplicationService bookApplicationService;
     private final BookDomainService bookDomainService1;
     private final UserBookService userBookService;
     private final BooksPerAuthorViewRepository booksPerAuthorViewRepository;
 
-    public BookController(BookApplicationService bookDomainService, BookDomainService bookDomainService1, UserBookService userBookService, BooksPerAuthorViewRepository booksPerAuthorViewRepository) {
-        this.bookDomainService = bookDomainService;
+    public BookController(BookApplicationService bookApplicationService, BookDomainService bookDomainService1, UserBookService userBookService, BooksPerAuthorViewRepository booksPerAuthorViewRepository) {
+        this.bookApplicationService = bookApplicationService;
         this.bookDomainService1 = bookDomainService1;
         this.userBookService = userBookService;
         this.booksPerAuthorViewRepository = booksPerAuthorViewRepository;
@@ -57,7 +57,7 @@ public class BookController {
     )
     @GetMapping
     public List<Book> findAll() {
-        return this.bookDomainService.findAll();
+        return this.bookApplicationService.findAll();
     }
 
     @Operation(
@@ -66,7 +66,9 @@ public class BookController {
     )
     @GetMapping({"/{id}"})
     public ResponseEntity<Book> findById(@PathVariable Long id) {
-        return (ResponseEntity)this.bookDomainService.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return bookApplicationService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(
@@ -75,9 +77,10 @@ public class BookController {
     )
     @PostMapping({"/add"})
     public ResponseEntity<CreateBookDto> save(@RequestBody CreateBookDto bookDto) {
-        return (ResponseEntity)this.bookDomainService.save(bookDto).map(ResponseEntity::ok).orElseGet(() -> {
-            return ResponseEntity.notFound().build();
-        });
+       return bookApplicationService
+               .save(bookDto)
+               .map(ResponseEntity::ok)
+               .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(
@@ -86,9 +89,10 @@ public class BookController {
     )
     @PutMapping({"/edit/{id}"})
     public ResponseEntity<UpdateBookDto> update(@PathVariable Long id, @RequestBody UpdateBookDto bookDto) {
-        return (ResponseEntity)this.bookDomainService.update(id, bookDto).map(ResponseEntity::ok).orElseGet(() -> {
-            return ResponseEntity.notFound().build();
-        });
+        return bookApplicationService
+                .update(id,bookDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(
@@ -97,17 +101,13 @@ public class BookController {
     )
     @DeleteMapping({"/delete/{id}"})
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (this.bookDomainService.findById(id).isPresent()) {
-            this.bookDomainService.deleteById(id);
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+       bookApplicationService.deleteById(id) ;
+       return ResponseEntity.noContent().build();
     }
 
     @PutMapping({"/rent/{id}"})
     public void markBookAsRented(@PathVariable Long id) {
-        this.bookDomainService.markAsRented(id);
+       return;
     }
 
     @PostMapping({"/save_userbook/{bookId}"})
@@ -156,7 +156,7 @@ public class BookController {
     )
     @GetMapping({"/available"})
     public ResponseEntity<List<UpdateBookDto>> getAvailableBooks() {
-        List<UpdateBookDto> books = this.bookDomainService.getAvaliableBooks();
+        List<UpdateBookDto> books = this.bookApplicationService.getAvaliableBooks();
         return books.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(books);
     }
 

@@ -17,10 +17,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-@Profile({"dev"})
+@Profile("dev")
 @Configuration
 @EnableWebSecurity
 public class JwtSecurityWebConfig {
+
     private final CustomUsernamePasswordAuthenticationProvider authenticationProvider;
     private final JwtFilter jwtFilter;
 
@@ -42,13 +43,38 @@ public class JwtSecurityWebConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable).cors((corsCustomizer) -> {
-            corsCustomizer.configurationSource(this.corsConfigurationSource());
-        }).authorizeHttpRequests((authorizeHttpRequestsCustomizer) -> {
-            ((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)authorizeHttpRequestsCustomizer.requestMatchers(new String[]{"/swagger-ui/**", "/v3/api-docs/**", "/api/user/register", "/api/user/login", "/api/authors/names", "/api/books", "/api/books/**", "/api/authors", "/api/authors/**", "/api/countries/**", "/api/countries"})).permitAll();
-        }).sessionManagement((sessionManagementConfigurer) -> {
-            sessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-        }).authenticationProvider(this.authenticationProvider).addFilterBefore(this.jwtFilter, UsernamePasswordAuthenticationFilter.class);
-        return (SecurityFilterChain)http.build();
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(corsCustomizer ->
+                        corsCustomizer.configurationSource(corsConfigurationSource())
+                )
+                .authorizeHttpRequests(authorizeHttpRequestsCustomizer ->
+                                authorizeHttpRequestsCustomizer
+//                                        .requestMatchers(
+//                                                "/swagger-ui/**",
+//                                                "/v3/api-docs/**",
+//                                                "/api/user/register",
+//                                                "/api/user/login"
+//                                        )
+//                                        .permitAll()
+//                                        .requestMatchers(
+//                                                "/api/categories",
+//                                                "/api/manufacturers",
+//                                                "/api/products"
+//                                        )
+//                                        .permitAll()
+//                                .hasAnyRole("USER", "ADMIN")
+                                        .anyRequest()
+                                        .permitAll()
+//                                .hasRole("ADMIN")
+                )
+                .sessionManagement(sessionManagementConfigurer ->
+                        sessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authenticationProvider(authenticationProvider)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
     }
+
 }
+
